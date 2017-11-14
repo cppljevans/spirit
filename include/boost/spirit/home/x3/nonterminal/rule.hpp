@@ -179,19 +179,24 @@ namespace boost { namespace spirit { namespace x3
           , Context const& context, unused_type, ActualAttribute& attr) const
         /**@brief
          *  *not* called from BOOST_SPIRIT_DEFINE_; hence,
-         *  the attribute transform must be done to avoid the error
-         *  reported here:
-         *    https://sourceforge.net/p/spirit/mailman/message/36093142/
+         *  the attribute transform must be done to avoid the "template
+         *  static assertion" failure reported here:
+         *    https://sourceforge.net/p/spirit/mailman/message/36093115/
          *  *and* also solve the link problem mentioned elsewhere in
          *  that same post:
          *    https://stackoverflow.com/questions/43791079/x3-linker-error-with-separate-tu
          */
         {
+          //#define SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+          #ifdef SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+            bool ok_parse=this->parse_no_xform( first, last, context, attr);
+          #else
             auto parser_f=[&]
-              ( Iterator& f_first, Iterator const& f_last
-              , auto&_attr
+              ( Iterator& first_f, Iterator const& last_f
+              , auto&attr_f
               )
-              {  return  this->parse_no_xform( f_first, f_last, context, _attr);
+              { 
+                return  this->parse_no_xform( first_f, last_f, context, attr_f);
               };
             bool ok_parse=
               detail::rule_parser<Attribute,ID>::rule_attr_transform_f
@@ -200,6 +205,7 @@ namespace boost { namespace spirit { namespace x3
               , attr
               , parser_f
               );
+          #endif//SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
             return ok_parse;
         }
       #else
@@ -263,10 +269,10 @@ namespace boost { namespace spirit { namespace x3
         {
           #if BOOST_SPIRIT_X3_EXPERIMENTAL_ATTR_XFORM_IN_RULE
             auto parser_f=[&]
-              ( Iterator& f_first, Iterator const& f_last
-              , auto&_attr
+              ( Iterator& first_f, Iterator const& last_f
+              , auto&attr_f
               )
-              {  return  parse_rule(*this, f_first, f_last, context, _attr);
+              {  return  parse_rule(*this, first_f, last_f, context, attr_f);
               };
             bool ok_parse=
               detail::rule_parser<Attribute,ID>::rule_attr_transform_f
@@ -480,10 +486,10 @@ namespace boost { namespace spirit { namespace x3
                   ;
               #if BOOST_SPIRIT_X3_EXPERIMENTAL_ATTR_XFORM_IN_RULE
                 auto parser_f=[&]
-                  ( Iterator& f_first, Iterator const& f_last
-                  , auto&_attr
+                  ( Iterator& first_f, Iterator const& last_f
+                  , auto&attr_f
                   )
-                  {  return  def.parse( f_first, f_last, ctx, unused, _attr);
+                  {  return  def.parse( first_f, last_f, ctx, unused, attr_f);
                   };
                 bool ok_parse=
                   detail::rule_parser<Attribute,ID>::rule_attr_transform_f

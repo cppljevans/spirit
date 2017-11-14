@@ -43,8 +43,19 @@ namespace boost { namespace spirit { namespace x3
         bool parse(Iterator& /* first */, Iterator const& /* last */
           , Context const& /* context */, RuleContext&, Attribute& attr_) const
         {
+          #ifdef USE_TRACING
+          trace_scope ts("auxiliary/attr.hpp:parse(...,attr_)");
+          std::cout<<"inp:attr_="<<attr_<<".\n";
+          #endif
             // $$$ Change to copy_to once we have it $$$
+          #if 0
             traits::move_to(value_, attr_);
+          #else
+            traits::move_to(value_.begin(), value_.end(), attr_);
+          #endif
+          #ifdef USE_TRACING
+          std::cout<<"out:attr_="<<attr_<<".\n";
+          #endif
             return true;
         }
 

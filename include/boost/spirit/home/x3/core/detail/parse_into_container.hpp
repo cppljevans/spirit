@@ -10,6 +10,41 @@
 #include <type_traits>
 
 #include <boost/spirit/home/x3/support/traits/container_traits.hpp>
+//#define BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_COUNT_PASS_FAIL
+#ifdef BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_COUNT_PASS_FAIL
+namespace boost { namespace spirit { namespace x3 { namespace traits
+{
+    static unsigned r_pass;
+    static unsigned r_fail;
+}    
+}}}
+#endif//BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_COUNT_PASS_FAIL
+#ifndef BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
+  #define BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT 1
+#endif//BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
+namespace boost { namespace spirit { namespace x3 { namespace traits
+{
+
+    template <typename Container>
+    inline auto& emplace_back(Container& c)
+    { c.emplace_back(); return c.back();
+    }
+    template <typename Container>
+    inline void emplace_back(Container& c, typename Container::value_type& v)
+    { c.emplace_back(v);
+    }
+    inline auto& emplace_back(std::string& c)
+    { std::string::value_type v; return c.append(1,v).back();
+    }
+    inline void emplace_back(std::string& c, typename std::string::value_type v)
+    { c.push_back(v);
+    }
+    template <typename Container>
+    inline void pop_back(Container& c)
+    { c.pop_back();
+    }
+}
+}}}  
 #include <boost/spirit/home/x3/support/traits/value_traits.hpp>
 #include <boost/spirit/home/x3/support/traits/attribute_of.hpp>
 #include <boost/spirit/home/x3/support/traits/handles_container.hpp>
@@ -92,18 +127,61 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           , Iterator& first, Iterator const& last
           , Context const& context, RContext& rcontext, Attribute& attr, mpl::false_)
         {
-            // synthesized attribute needs to be value initialized
             typedef typename
                 traits::container_value<Attribute>::type
             value_type;
+          #if BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
+            //The rationale for assuming that, on the average, this
+            //runs faster, is that, in both the #if and #else parts
+            //a value_type has to be created, but in the #else
+            //case, it also has to be copied if r is true.
+            //OTOH, in case r is false, then the #if part has to
+            //adjust a pointer in attr in addition to what the #else part
+            //has to do; hence, it would seem the #if part should run faster.
+            //Of course, if the parse fails most of the time, then
+            //the #else part might run faster because then there would
+            //no need to adjust the pointer in attr (assuming attr=vector<T>).
+            //
+            //Benchmarks supports this:
+            //  This shows number of times when parse passed or failed:
+            //  
+            //    r_fail=11,000,000
+            //    r_pass=66,038,000
+            //  
+            //  and times:
+            //  
+            //    #if BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
+            //      mean 8.56ms
+            //    #else
+            //      mean 10.744ms
+            //    #endif
+            //
+            auto&val=traits::emplace_back(attr);
+            bool r = parser.parse(first, last, context, rcontext, val);
+            if(!r)
+              // rm just emplace_back'd val.
+              traits::pop_back(attr);
+          #else        
+            // synthesized attribute needs to be value initialized
             value_type val = traits::value_initialize<value_type>::call();
 
-            if (!parser.parse(first, last, context, rcontext, val))
-                return false;
-
-            // push the parsed value into our attribute
-            traits::push_back(attr, val);
-            return true;
+            bool r = parser.parse(first, last, context, rcontext, val);
+            if(r)
+              // push the parsed value into our attribute
+              traits::push_back(attr, val);
+          #endif//BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
+          #ifdef USE_TRACING
+            trace_scope ts("parse_into_container_base_impl::call_synthesize_x(...,accepts_container=mpl::false_)");
+            std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
+              <<"\n:attr=\n";
+            print_attr(std::cout,attr)<<"\n";
+          #endif
+          #ifdef BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_COUNT_PASS_FAIL
+            r?traits::r_pass++
+             :traits::r_fail++
+             ;
+          #endif//BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_COUNT_PASS_FAIL
+            return r;
         }
 
         // Parser has attribute (synthesize; Attribute is a container)
@@ -114,7 +192,14 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           , Iterator& first, Iterator const& last
           , Context const& context, RContext& rcontext, Attribute& attr, mpl::true_)
         {
-            return parser.parse(first, last, context, rcontext, attr);
+            bool r =  parser.parse(first, last, context, rcontext, attr);
+            #ifdef USE_TRACING
+              trace_scope ts("parse_into_container_base_impl::call_synthesize_x(...,accepts_container=mpl::true_)");
+              std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
+                <<"\n:attr=\n";
+              print_attr(std::cout,attr)<<"\n";
+            #endif
+            return r;
         }
 
         // Parser has attribute (synthesize; Attribute is a container)
@@ -241,8 +326,15 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           , Iterator& first, Iterator const& last
           , Context const& context, RContext& rcontext, Attribute& attr, mpl::false_)
         {
-            return parse_into_container_base_impl<Parser>::call(
+            bool r = parse_into_container_base_impl<Parser>::call(
                 parser, first, last, context, rcontext, attr);
+            #ifdef USE_TRACING
+              trace_scope ts("parse_into_container_impl::call(...,pass_as_is=mpl::false_)");
+              std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
+                <<"\n:attr=\n";
+              print_attr(std::cout,attr)<<"\n";
+            #endif
+            return r;
         }
 
         template <typename Iterator, typename Attribute>
@@ -251,12 +343,34 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           , Iterator& first, Iterator const& last
           , Context const& context, RContext& rcontext, Attribute& attr, mpl::true_)
         {
+          #define BOOST_SPIRIT_X3_EXPERIMENTAL_PARSE_INTO_CONTAINER_IMPL_RESIZE
+          #ifdef BOOST_SPIRIT_X3_EXPERIMENTAL_PARSE_INTO_CONTAINER_IMPL_RESIZE
+            //Purpose:
+            //  Should be faster then the #else branch *if*:
+            //    creation in existing attr then erasure of attr elements
+            //    in case parsing fails 
+            //  is, on the average,  be faster than:
+            //    creation into local rest followed by copy into attr
+            //    in case parsing succeeds,
+            //However(2017-11-08):
+            //  * csv_parser benchmark shows no difference :(
+            //  * the test/attr.cpp fails at last test.
+            auto attr_inp_size=attr.size();
+            bool r = parser.parse(first, last, context, rcontext, attr);
+            if(!r)
+              attr.resize(attr_inp_size);
+            #ifdef USE_TRACING
+              trace_scope ts("parse_into_container_impl::call(...,pass_as_is=mpl::true_)");
+              std::cout<<":r="<<r<<":size="<<attr.size()<<"\n";
+            #endif
+          #else
             if (attr.empty())
                 return parser.parse(first, last, context, rcontext, attr);
             Attribute rest;
             bool r = parser.parse(first, last, context, rcontext, rest);
             if (r)
                 attr.insert(attr.end(), rest.begin(), rest.end());
+          #endif//BOOST_SPIRIT_X3_EXPERIMENTAL_PARSE_INTO_CONTAINER_IMPL_ERASE
             return r;
         }
 

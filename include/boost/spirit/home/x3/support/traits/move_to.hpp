@@ -167,10 +167,17 @@ namespace boost { namespace spirit { namespace x3 { namespace traits
         inline void
         move_to(Iterator first, Iterator last, Dest& dest, container_attribute)
         {
+          #ifdef USE_TRACING
+          trace_scope ts("support/traits/move_to.hpp:move_to<Iterator,Dest>");
+          std::cout<<"inp:dest="<<dest<<".\n";
+          #endif
             if (is_empty(dest))
                 dest = Dest(first, last);
             else
                 append(dest, first, last);
+          #ifdef USE_TRACING
+          std::cout<<"out:dest="<<dest<<".\n";
+          #endif
         }
         
         template <typename Iterator>
@@ -200,6 +207,10 @@ namespace boost { namespace spirit { namespace x3 { namespace traits
     {
         if (boost::addressof(src) != boost::addressof(dest))
             dest = std::move(src);
+      #ifdef USE_TRACING
+        trace_scope ts("support/traits/move_to.hpp:move_to(T const&, T& dest)");
+        std::cout<<"dest="<<dest<<"\n";
+      #endif
     }
 
     template <typename T>

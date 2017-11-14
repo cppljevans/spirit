@@ -22,10 +22,22 @@ namespace boost { namespace spirit { namespace x3
     {
         typedef Transformed type;
 
-        static Transformed pre(Exposed&) { return Transformed(); }
+        static Transformed pre(Exposed& val) 
+        { 
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::default_transform_attribute::pre(Exposed&)\n";
+            std::cout<<"&Exposed="<<boost::addressof(val)<<"\n";
+            std::cout<<"type_name<Transformed>="<<type_name<Transformed>()<<"\n";
+          #endif
+            return Transformed(); 
+        }
 
         static void post(Exposed& val, Transformed&& attr)
         {
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::default_transform_attribute::post(Exposed&,Transformed&&)\n";
+            std::cout<<"&Exposed="<<boost::addressof(val)<<"\n";
+          #endif
             traits::move_to(std::forward<Transformed>(attr), val);
         }
     };
@@ -35,8 +47,21 @@ namespace boost { namespace spirit { namespace x3
     struct default_transform_attribute<Attribute, Attribute>
     {
         typedef Attribute& type;
-        static Attribute& pre(Attribute& val) { return val; }
-        static void post(Attribute&, Attribute const&) {}
+        static Attribute& pre(Attribute& val) 
+        { 
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::default_transform_attribute::pre(Attribute&)\n";
+            std::cout<<"&Attribute="<<boost::addressof(val)<<"\n";
+          #endif
+            return val; 
+        }
+        static void post(Attribute& val, Attribute const&) 
+        {
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::default_transform_attribute::post(Attribute&, Attribute)\n";
+            std::cout<<"&Attribute="<<boost::addressof(val)<<"\n";
+          #endif
+        }
     };
 
     // main specialization for x3
@@ -49,8 +74,21 @@ namespace boost { namespace spirit { namespace x3
     struct transform_attribute<Attribute&, Attribute>
     {
         typedef Attribute& type;
-        static Attribute& pre(Attribute& val) { return val; }
-        static void post(Attribute&, Attribute const&) {}
+        static Attribute& pre(Attribute& val) 
+        { 
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::transform_attribute::pre(Attribute& val)\n";
+            std::cout<<"&Attribute="<<boost::addressof(val)<<"\n";
+          #endif
+            return val; 
+        }
+        static void post(Attribute& val, Attribute const&) 
+        {
+          #ifdef TRACE_TRANS_ATTR
+            std::cout<<"x3::transform_attribute::post(Attribute& val, Attribute const&)\n";
+            std::cout<<"&Attribute="<<boost::addressof(val)<<"\n";
+          #endif
+        }
     };
 
     // unused_type needs some special handling as well

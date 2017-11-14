@@ -14,8 +14,14 @@ Message-ID: <a5c089be-f118-3297-147f-588f23818bbb@gmail.com>
 /*
 https://sourceforge.net/p/spirit/mailman/message/36091645/
  */
-//=================================    
-#define BOOST_SPIRIT_X3_DEBUG
+//=================================  
+//#define BOOST_SPIRIT_X3_DEBUG
+#define TRACE_TRANS_ATTR
+#define COMPARE_ACTUAL_TRANS_ATTR
+#if defined(COMPARE_ACTUAL_TRANS_ATTR) || defined(TRACE_TRANS_ATTR)
+#include "../type_name.hpp"  
+#include "../trace_scope.hpp"  
+#endif
 #include <boost/config/warning_disable.hpp>
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -197,6 +203,10 @@ auto const entry = x3::skip(ascii::space) [process];
 } //End namespace
 
 int main() {
+#ifdef COMPARE_ACTUAL_TRANS_ATTR
+      boost::iostreams::indent_scoped_ostreambuf<char>
+  indent_outbuf(std::cout,2);
+#endif
 
      std::string strs[]=
      {

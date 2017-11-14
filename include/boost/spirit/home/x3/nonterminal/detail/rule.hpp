@@ -317,9 +317,20 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           ( char const* rule_name 
           , Iterator& first
           , Iterator const& last
-          , ActualAttribute& attr
+          , ActualAttribute& act_attr
           , Parser parser
           )
+        /**
+         * @brief
+         *  call parser with transformation of act_attr.
+         *
+         *  The transformed attribute should have type
+         *  Attribute (i.e. the rule attribute).
+         *  (The last sentence is only a guess, at this
+         *  point [2017-11-12], but is based on trace
+         *  output produced by the code guarded by the
+         *  COMPARE_ACTUAL_TRANS_ATTR macro below.)
+         */
         { 
           using make_attribute=traits::make_attribute<Attribute, ActualAttribute>;
         
@@ -331,8 +342,20 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
               >;
           using value_type=typename make_attribute::value_type;
           using transform_attr=typename transform::type;
-          value_type made_attr{make_attribute::call(attr)};
-          transform_attr attr_(transform::pre(made_attr));
+          value_type made_attr{make_attribute::call(act_attr)};
+          transform_attr xfrm_attr(transform::pre(made_attr));
+        #ifdef COMPARE_ACTUAL_TRANS_ATTR
+          trace_scope ts("rule_attr_transform_f");
+          using trans_attr=typename remove_reference<transform_attr>::type;
+          std::cout<<"ActualAttribute="<<type_name<ActualAttribute>()<<"\n";
+          bool const same_actual_trans=is_same<ActualAttribute,trans_attr>::value;
+          if(!same_actual_trans)
+          {
+            std::cout<<"same_actual_trans="<<same_actual_trans<<"\n";
+            bool const same_rule_trans=is_same<Attribute,trans_attr>::value;
+            std::cout<<"same_rule_trans="<<same_rule_trans<<"\n";
+          }
+        #endif 
           bool ok_parse
             //Creates a place to hold the result of parse_rhs
             //called inside the following scope.
@@ -340,22 +363,25 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           {
            // Create a scope to cause the dbg variable below (within
            // the #if...#endif) to call it's DTOR before any
-           // modifications are made to the attribute, attr_ passed
+           // modifications are made to the attribute, xfrm_attr, passed
            // to parse_rhs (such as might be done in
            // traits::post_transform when, for example,
            // ActualAttribute is a recursive variant).
 #if defined(BOOST_SPIRIT_X3_DEBUG)
                 context_debug<Iterator, transform_attr>
-              dbg(rule_name, first, last, attr_, ok_parse);
+              dbg(rule_name, first, last, xfrm_attr, ok_parse);
 #endif
-              ok_parse = parser(first, last, attr_);
+              ok_parse = parser(first, last, xfrm_attr);
           }
           // do up-stream transformation, this integrates the results
           // back into the original attribute value, if appropriate
           if(ok_parse)
           {
-            traits::post_transform(attr, std::forward<transform_attr>(attr_));
+              traits::post_transform(act_attr, std::forward<transform_attr>(xfrm_attr));
           }
+        #ifdef COMPARE_ACTUAL_TRANS_ATTR
+          std::cout<<"ok_parse="<<ok_parse<<"\n";
+        #endif
           return ok_parse;
         };//rule_attr_transform_f
   

@@ -7,12 +7,14 @@
 SHELL := /bin/bash
 PATH := $(HOME)/bin:$(PATH)
 REALPWD := $(shell realpath $(PWD))
+MAIN=attr
+MAIN=trace-csv
 #Specify compiler to use:
   HOW=clangxx5_0_pkg
   #HOW=gcc6_20151018
 #Specify the grammar complexity and corresponding test data
   COMPLEXITY=complex
-  #COMPLEXITY=simple
+  COMPLEXITY=simple
 #Specify the grammar to use:
   GRAM=csv_$(COMPLEXITY)
 #Specify the test data
@@ -57,6 +59,7 @@ COMPILE.gprof=-pg -g -static-libgcc -static-libstdc++
   #    https://sourceware.org/ml/binutils/2008-12/msg00068.html
   ###
 INCS:= \
+ -I$(boost.spirit.fork) \
  -I$(boost.root) \
   $(INCS) \
   ###The nonius.inc is only useful for nonius.cpp
@@ -90,7 +93,7 @@ define targets_gen
 #    $(5) : other compile flags (e.g. optimization level).
 
 nonius-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).exe: nonius.cpp $(target_deps)
-	$(COMPILER.$(HOW)) -std=c++1z -$(5) \
+	$(COMPILER.$(HOW)) -std=c++17 -$(5) \
 	  -DTEST_DATA=input-$(TEST_DATA).hpp \
 	  -DHOW_INC=$(1)-$(GRAM).hpp \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_GET_RHS_CRTP=$(3) \
@@ -100,7 +103,7 @@ nonius-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).out: nonius-$(GRAM)-$(
 	./$$< -o $$@
 	cat $$@
 chrono-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).exe: chrono.cpp $(target_repeat_deps)
-	$(COMPILER.$(HOW)) -std=c++1z -$(5) \
+	$(COMPILER.$(HOW)) -std=c++17 -$(5) \
 	  -DTEST_DATA=input-$(TEST_DATA).hpp \
 	  -DHOW_INC=$(1)-$(GRAM).hpp \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_GET_RHS_CRTP=$(3) \
@@ -111,7 +114,7 @@ chrono-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).out: chrono-$(GRAM)-$(
 	./$$< > $$@
 	cat $$@
 gprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).exe: bench_repeat.cpp $(target_repeat_deps)
-	$(COMPILER.$(HOW)) -std=c++1z $(COMPILE.gprof) -$(5) \
+	$(COMPILER.$(HOW)) -std=c++17 $(COMPILE.gprof) -$(5) \
 	  -DHOW_INC=$(1)-$(GRAM).hpp \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_GET_RHS_CRTP=$(3) \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_ATTR_XFORM_IN_RULE=$(4) \
@@ -124,7 +127,7 @@ gprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).annot: gprof-$(GRAM)-$(
 gprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).flat_graph: gprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).gmon
 	gprof --demangle --line gprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).exe $$< | c++filt > $$@
 pprof-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).exe: pprof.cpp $(target_repeat_deps)
-	$(COMPILER.$(HOW)) -std=c++1z -$(5) \
+	$(COMPILER.$(HOW)) -std=c++17 -$(5) \
 	  -DHOW_INC=$(1)-$(GRAM).hpp \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_GET_RHS_CRTP=$(3) \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_ATTR_XFORM_IN_RULE=$(4) \
@@ -142,7 +145,7 @@ gcov-$(GRAM)-$(1)-$(2)-GET$(3)-XRULE$(4)-Opt$(5)-$(HOW).dir: bench_repeat.cpp gc
 	mkdir -p $$@
 	-rm $$@/*.gcov $$@/bench_repeat.gcda $$@/bench_repeat.gcno
 	cd $$@ ; \
-	$(COMPILER.$(HOW)) -std=c++1z -fprofile-arcs -ftest-coverage -$(5) \
+	$(COMPILER.$(HOW)) -std=c++17 -fprofile-arcs -ftest-coverage -$(5) \
 	  -DHOW_INC=$(1)-$(GRAM).hpp \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_GET_RHS_CRTP=$(3) \
 	  -DBOOST_SPIRIT_X3_EXPERIMENTAL_ATTR_XFORM_IN_RULE=$(4) \
@@ -239,7 +242,7 @@ PROFS=\
 profs: $(PROFS)
 
 test:
-	$(COMPILER.$(HOW)) -DHOW_INC=test.hpp -std=c++1z -pg test.cpp -o test.exe
+	$(COMPILER.$(HOW)) -DHOW_INC=test.hpp -std=c++17 -pg test.cpp -o test.exe
 	./test.exe
 	#gprof test.exe > $@.gprof_out
 
