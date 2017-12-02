@@ -187,16 +187,30 @@ namespace boost { namespace spirit { namespace x3
          *    https://stackoverflow.com/questions/43791079/x3-linker-error-with-separate-tu
          */
         {
-          //#define SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
-          #ifdef SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
-            bool ok_parse=this->parse_no_xform( first, last, context, attr);
-          #else
             auto parser_f=[&]
               ( Iterator& first_f, Iterator const& last_f
               , auto&attr_f
               )
               { 
-                return  this->parse_no_xform( first_f, last_f, context, attr_f);
+              #ifdef TRACE_RULE_DEFINITION_PARSER_F
+                using transform_attr=decltype(attr_f);
+                using trans_attr=typename remove_reference<transform_attr>::type;
+                bool const same_actual_trans=is_same<ActualAttribute,trans_attr>::value;
+                trace_scope ts("nonterminal/rule.hpp:rule_definition:parser_f");
+                std::cout<<"same_actual_trans="<<same_actual_trans<<"\n";
+                std::cout<<"ActualAttribute="<<type_name<ActualAttribute>()<<"\n";
+                if(!same_actual_trans)
+                {
+                  bool const same_rule_trans=is_same<Attribute,trans_attr>::value;
+                  std::cout<<"same_rule_trans="<<same_rule_trans<<"\n";
+                  std::cout<<"trans_attr     ="<<type_name<trans_attr>()<<"\n";
+                }
+              #endif//TRACE_RULE_DEFINITION_PARSER_F
+              #ifdef SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+                return this->parse_no_xform( first_f, last_f, context, attr  );
+              #else
+                return this->parse_no_xform( first_f, last_f, context, attr_f);
+              #endif//SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
               };
             bool ok_parse=
               detail::rule_parser<Attribute,ID>::rule_attr_transform_f
@@ -205,7 +219,6 @@ namespace boost { namespace spirit { namespace x3
               , attr
               , parser_f
               );
-          #endif//SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
             return ok_parse;
         }
       #else

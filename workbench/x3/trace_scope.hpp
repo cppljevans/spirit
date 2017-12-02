@@ -1,7 +1,7 @@
 #ifndef TRACE_SCOPE_HPP_INCLUDED
 #define TRACE_SCOPE_HPP_INCLUDED
 #include "iostreams_utility.hpp"
-//#define USE_TRACING  //if defined(USE_TRACING), trace output is produced.
+#define USE_TRACING  //if defined(USE_TRACING), trace output is produced.
 #include <string>
 namespace boost
 {

@@ -137,7 +137,8 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
             //case, it also has to be copied if r is true.
             //OTOH, in case r is false, then the #if part has to
             //adjust a pointer in attr in addition to what the #else part
-            //has to do; hence, it would seem the #if part should run faster.
+            //has to do; hence, it would seem the #if part should run faster
+            //since ajusting a pointer is faster than copying a value.
             //Of course, if the parse fails most of the time, then
             //the #else part might run faster because then there would
             //no need to adjust the pointer in attr (assuming attr=vector<T>).
@@ -170,7 +171,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
               // push the parsed value into our attribute
               traits::push_back(attr, val);
           #endif//BOOST_SPIRIT_PARSE_INTO_CONTAINER_BASE_IMPL_PUSH_BACK_OPT
-          #ifdef USE_TRACING
+          #ifdef TRACE_PARSE_INTO_CONTAINER
             trace_scope ts("parse_into_container_base_impl::call_synthesize_x(...,accepts_container=mpl::false_)");
             std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
               <<"\n:attr=\n";
@@ -193,7 +194,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           , Context const& context, RContext& rcontext, Attribute& attr, mpl::true_)
         {
             bool r =  parser.parse(first, last, context, rcontext, attr);
-            #ifdef USE_TRACING
+            #ifdef TRACE_PARSE_INTO_CONTAINER
               trace_scope ts("parse_into_container_base_impl::call_synthesize_x(...,accepts_container=mpl::true_)");
               std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
                 <<"\n:attr=\n";
@@ -328,7 +329,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
         {
             bool r = parse_into_container_base_impl<Parser>::call(
                 parser, first, last, context, rcontext, attr);
-            #ifdef USE_TRACING
+            #ifdef TRACE_PARSE_INTO_CONTAINER
               trace_scope ts("parse_into_container_impl::call(...,pass_as_is=mpl::false_)");
               std::cout<<":r="<<r<<":size="<<attr.size()<<":type_name<attr>="<<type_name<Attribute>()
                 <<"\n:attr=\n";
@@ -359,7 +360,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
             bool r = parser.parse(first, last, context, rcontext, attr);
             if(!r)
               attr.resize(attr_inp_size);
-            #ifdef USE_TRACING
+            #ifdef TRACE_PARSE_INTO_CONTAINER
               trace_scope ts("parse_into_container_impl::call(...,pass_as_is=mpl::true_)");
               std::cout<<":r="<<r<<":size="<<attr.size()<<"\n";
             #endif

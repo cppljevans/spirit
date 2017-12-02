@@ -61,6 +61,7 @@ COMPILE.gprof=-pg -g -static-libgcc -static-libstdc++
 INCS:= \
  -I$(boost.spirit.fork) \
  -I$(boost.root) \
+ -I$(Lje.boost) \
   $(INCS) \
   ###The nonius.inc is only useful for nonius.cpp
 
@@ -82,7 +83,7 @@ target_deps=$(1)-$(GRAM).hpp input-$(GRAM).hpp bench_run.hpp trace_attr-csv.hpp
 target_repeat_deps=$(target_deps) bench_repeat.hpp ITERATIONS.hpp
 
 show:
-	@echo $(target_deps)
+	@ls -ld $(Lje.boost)
 
 define targets_gen
 #  Generate various targets dependent on parameters:

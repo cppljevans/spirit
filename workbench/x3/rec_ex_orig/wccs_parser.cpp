@@ -14,11 +14,19 @@ Message-ID: <a5c089be-f118-3297-147f-588f23818bbb@gmail.com>
 /*
 https://sourceforge.net/p/spirit/mailman/message/36091645/
  */
+//Purpose:
+//  Explore soltuion to errors in original source.
 //=================================  
 //#define BOOST_SPIRIT_X3_DEBUG
 #define TRACE_TRANS_ATTR
-#define COMPARE_ACTUAL_TRANS_ATTR
-#if defined(COMPARE_ACTUAL_TRANS_ATTR) || defined(TRACE_TRANS_ATTR)
+//#define COMPARE_ACTUAL_TRANS_ATTR
+#define SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+#ifdef SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+#include <boost/assert.hpp>
+#endif//SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE
+#if defined(COMPARE_ACTUAL_TRANS_ATTR) \
+ || defined(TRACE_TRANS_ATTR) \
+ || defined(SHOW_WRONG_SIZE_ATTRIBUTE_ASSERTION_FAILURE)
 #include "../type_name.hpp"  
 #include "../trace_scope.hpp"  
 #endif

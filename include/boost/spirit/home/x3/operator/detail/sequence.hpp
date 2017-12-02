@@ -306,6 +306,13 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
         typename partition::r_part r_part = partition::right(attr);
         typename l_pass::type l_attr = l_pass::call(l_part);
         typename r_pass::type r_attr = r_pass::call(r_part);
+        
+      #ifdef TRACE_PARSE_SEQUENCE
+        trace_scope ts("operator/detail/parse_sequence.hpp:parse_sequence");
+        std::cout<<"Attribute="<<type_name<Attribute>()<<"\n";
+        std::cout<<"l_attr="<<type_name<decltype(l_attr)>()<<"\n";
+        std::cout<<"r_attr="<<type_name<decltype(r_attr)>()<<"\n";
+      #endif//TRACE_PARSE_SEQUENCE
 
         Iterator save = first;
         if (parser.left.parse(first, last, context, rcontext, l_attr)

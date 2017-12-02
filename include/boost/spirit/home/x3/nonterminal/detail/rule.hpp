@@ -329,7 +329,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
          *  (The last sentence is only a guess, at this
          *  point [2017-11-12], but is based on trace
          *  output produced by the code guarded by the
-         *  COMPARE_ACTUAL_TRANS_ATTR macro below.)
+         *  TRACE_RULE_ATTR_TRANSFORM macro below.)
          */
         { 
           using make_attribute=traits::make_attribute<Attribute, ActualAttribute>;
@@ -344,18 +344,12 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           using transform_attr=typename transform::type;
           value_type made_attr{make_attribute::call(act_attr)};
           transform_attr xfrm_attr(transform::pre(made_attr));
-        #ifdef COMPARE_ACTUAL_TRANS_ATTR
-          trace_scope ts("rule_attr_transform_f");
-          using trans_attr=typename remove_reference<transform_attr>::type;
-          std::cout<<"ActualAttribute="<<type_name<ActualAttribute>()<<"\n";
-          bool const same_actual_trans=is_same<ActualAttribute,trans_attr>::value;
-          if(!same_actual_trans)
-          {
-            std::cout<<"same_actual_trans="<<same_actual_trans<<"\n";
-            bool const same_rule_trans=is_same<Attribute,trans_attr>::value;
-            std::cout<<"same_rule_trans="<<same_rule_trans<<"\n";
-          }
-        #endif 
+        #ifdef TRACE_RULE_ATTRIBUTE_TRANSFORM
+          trace_scope ts("detail/rule.hpp:rule_attribute_transform_f");
+          std::cout<<"make_attribute="<<type_name<make_attribute>()<<"\n";
+          std::cout<<"value_type="<<type_name<value_type>()<<"\n";
+          std::cout<<"transform="<<type_name<transform>()<<"\n";
+        #endif
           bool ok_parse
             //Creates a place to hold the result of parse_rhs
             //called inside the following scope.
@@ -379,7 +373,7 @@ namespace boost { namespace spirit { namespace x3 { namespace detail
           {
               traits::post_transform(act_attr, std::forward<transform_attr>(xfrm_attr));
           }
-        #ifdef COMPARE_ACTUAL_TRANS_ATTR
+        #ifdef TRACE_RULE_ATTRIBUTE_TRANSFORM
           std::cout<<"ok_parse="<<ok_parse<<"\n";
         #endif
           return ok_parse;
